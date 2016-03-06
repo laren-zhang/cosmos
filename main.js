@@ -132,3 +132,12 @@ function drag(obj, callbacks , limit) {
         return obj;
     }
 }
+
+/*
+* 获取元素指定样式
+* @Param {DOM} obj
+* @Param {String} attr 属性名
+* */
+function getStyle( obj, attr ){
+    return obj.currentStyle ? obj.currentStyle[attr] : getComputedStyle(obj)[attr];
+}
