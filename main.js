@@ -133,11 +133,28 @@ function drag(obj, callbacks , limit) {
     }
 }
 
+
 /*
 * 获取元素指定样式
 * @Param {DOM} obj
 * @Param {String} attr 属性名
+* @return
 * */
 function getStyle( obj, attr ){
     return obj.currentStyle ? obj.currentStyle[attr] : getComputedStyle(obj)[attr];
+}
+
+
+/*
+* 判断元素是狗包含指定元素
+* @Param {DOM} parentNode
+* @Param {DOM} childNode
+* @return {Boolean}
+* */
+function contains(parentNode, childNode) {
+    if (parentNode.contains) {
+        return parentNode != childNode && parentNode.contains(childNode);
+    } else {
+        return !!(parentNode.compareDocumentPosition(childNode) & 16);
+    }
 }
