@@ -2,6 +2,7 @@
  * Created by cliens on 2016/3/6.
  */
 
+
 /*
 * 发起ajax函数
 * @Param {JSON} options ajax配置参数
@@ -44,6 +45,7 @@ function ajax(options){
     return xhr;
 }
 
+
 /*
 * 类jQuery元素获取，但是返回的是原生DOM对象
 * @Param {String} query 查询字符串
@@ -70,4 +72,63 @@ function $N(query , context){
             return context.getElementsByTagName(query);
     }
 
+}
+
+
+/*
+ * 拖拽
+ * @Param {DOM} obj 要拖拽的对象
+ * @Param {JSON} [callbacks] 设定move,end拖拽状态方法
+ * @return {JSON} [limit] 对拖拽方向进行限制，默认{x:false, y:false}
+ * */
+function drag(obj, callbacks , limit) {
+    var
+        downX
+        , downY
+        , initX
+        , initY
+        , moveX
+        , moveY
+        , doc = document;
+
+    bindEvent(obj, 'mousedown', function(ev) {
+
+        downX = ev.clientX;
+        downY = ev.clientY;
+        initX = obj.offsetLeft;
+        initY = obj.offsetTop;
+
+        bindEvent(doc, "mousemove", move);
+        bindEvent(doc, "mouseup", up);
+        bindEvent(doc, "selectstart", preventDefault);
+
+        // 阻止默认选取
+        function preventDefault(ev) {
+            ev.preventDefault();
+        }
+
+        function move(ev) {
+            moveX = ev.clientX - downX;
+            moveY = ev.clientY - downY;
+
+            limit.x || (obj.style.left = initX + moveX + 'px');
+            limit.y || (obj.style.top = initY + moveY + 'px');
+            callbacks && callbacks.move && callbacks.move.bind(obj)(ev);
+        }
+
+        function up(ev) {
+            doc.removeEventListener('mousemove', move, false);
+            doc.removeEventListener('mouseup', up, false);
+            doc.removeEventListener('selectstart', preventDefault, false);
+        }
+
+        callbacks && callbacks.end && callbacks.bind(this)();
+
+    });
+
+    // 绑定事件函数
+    function bindEvent(obj, event, callbacks) {
+        obj.addEventListener(event, callbacks,false);
+        return obj;
+    }
 }
