@@ -158,3 +158,38 @@ function contains(parentNode, childNode) {
         return !!(parentNode.compareDocumentPosition(childNode) & 16);
     }
 }
+
+
+/* 依赖contains() */
+/*
+* hover函数
+* @Param {DOM} obj DOM对象
+* @Param {Function} callbackIn hover时候执行的函数
+* @Param {Function} callbackOut 鼠标移出执行函数
+* */
+function hover(obj, callbackIn, callbackOut){
+
+    obj.onmouseover = function (ev){
+        if(isHover(ev , this))
+            callbackIn && callbackIn();
+    };
+
+    obj.onmouseout = function (ev){
+        if(isHover(ev , this))
+            callbackOut && callbackOut();
+    };
+
+    function isHover(e,target){
+        e = e || window.event;
+
+        var fromNode = e.relatedTarget || e.fromElement
+            , toNode = e.relatedTarget || e.toElement;
+
+        if (e.type=="mouseover")  {
+            return !contains(target, fromNode) && !( fromNode === target);
+        } else {
+            return !contains(target, toNode) && !(toNode === target);
+        }
+    }
+
+}
