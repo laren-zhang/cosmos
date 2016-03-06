@@ -4,7 +4,7 @@
 
 /*
 * 发起ajax函数
-* @options {JSON} options ajax配置参数
+* @Param {JSON} options ajax配置参数
 * */
 function ajax(options){
     options = {
@@ -42,4 +42,32 @@ function ajax(options){
     }
 
     return xhr;
+}
+
+/*
+* 类jQuery元素获取，但是返回的是原生DOM对象
+* @Param {String} query 查询字符串
+* @Param {DOM} [context] 查询上下文，默认document
+* @return {DOM} 返回Node或NodeList;当query为函数时返回值为null
+* */
+function $N(query , context){
+    query = query.trim();
+    context = context || document;
+    var type = query.charAt(0);
+
+    if(typeof query == 'Function'){
+        query();
+        return null;
+    }
+
+    query = query.substring(1);
+    switch(type){
+        case '#':
+            return document.getElementById();
+        case '.':
+            return context.getElementsByClassName(query);
+        default:
+            return context.getElementsByTagName(query);
+    }
+
 }
