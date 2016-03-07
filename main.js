@@ -195,6 +195,83 @@ function hover(obj, callbackIn, callbackOut){
 }
 
 /*
+* 对象拷贝继承方法
+* */
+function extend() {
+    var options, name, src, copy, copyIsArray, clone,
+        target = arguments[ 0 ] || {},
+        i = 1,
+        length = arguments.length,
+        deep = false;
+
+    // 如果是深拷贝
+    if ( typeof target === "boolean" ) {
+        deep = target;
+
+        // 跳过boolean
+        target = arguments[ i ] || {};
+        i++;
+    }
+
+    // 处理target非对象情况
+    if ( typeof target !== "object" && {}.toString.call( target ) !== 'Function' ) {
+        target = {};
+    }
+
+    for ( ; i < length; i++ ) {
+
+        // 只扩展 non-null 值
+        if ( ( options = arguments[ i ] ) != null ) {
+
+            for ( name in options ) {
+                src = target[ name ];
+                copy = options[ name ];
+
+                // 防止死循环
+                if ( target === copy ) {
+                    continue;
+                }
+
+
+                // 引用类型，执行递归
+                if ( deep && copy && ( isPlainObject( copy ) || ( copyIsArray = Array.isArray( copy ) ) ) ) {
+
+                    if ( copyIsArray ) {
+                        copyIsArray = false;
+                        clone = src && Array.isArray( src ) ? src : [];
+                    } else {
+                        clone = src && isPlainObject( src ) ? src : {};
+                    }
+
+                    target[ name ] = extend( deep, clone, copy );
+
+                    // 不扩展 undefined 值
+                } else if ( copy !== undefined ) {
+                    target[ name ] = copy;
+                }
+            }
+        }
+    }
+
+    function isPlainObject( obj ) {
+
+        // - 任何对象内部 [[Class]]属性不为"[object Object]"
+        // - DOM nodes
+        // - window
+        if ( typeof obj !== "object" || obj.nodeType || obj === obj.window ) {
+            return false;
+        }else if( obj.constructor && ! {}.hasOwnProperty.call( obj.constructor.prototype, "isPrototypeOf" ) ){
+            return false;
+        }
+
+        return true;
+    }
+
+    return target;
+}
+
+
+/*
 * 简单的PubSub模式 发布者/订阅者模式
 */
 (function() {
