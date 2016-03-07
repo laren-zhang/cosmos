@@ -193,3 +193,34 @@ function hover(obj, callbackIn, callbackOut){
     }
 
 }
+
+/*
+* 简单的PubSub模式 发布者/订阅者模式
+*/
+(function() {
+    function Event() {
+        this._events = {};
+    }
+
+    Event.prototype.on = function(name, listener) {
+        if(this._events[name]){
+            this._events[name].push(listener);
+        }else{
+            this._events[name] = [listener];
+        }
+    };
+
+    Event.prototype.emit = function(name) {
+
+        var event = this._events[name];
+        var len = event && event.length, i = 0;
+        var param = Array.prototype.slice.call(arguments, 1);
+
+        for(;i<len;i++){
+            this._events[name][i].apply(null, param);
+        }
+
+    };
+
+    window.ev = new Event();
+})();
