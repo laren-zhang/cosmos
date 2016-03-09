@@ -111,8 +111,8 @@ function drag(obj, callbacks , limit) {
             moveX = ev.screenX - downX;
             moveY = ev.screenY - downY;
 
-            limit.x || (obj.style.left = initX + moveX + 'px');
-            limit.y || (obj.style.top = initY + moveY + 'px');
+            limit && limit.x || (obj.style.left = initX + moveX + 'px');
+            limit && limit.y || (obj.style.top = initY + moveY + 'px');
             callbacks && callbacks.move && callbacks.move.bind(obj)(ev);
         }
 
