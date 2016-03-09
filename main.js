@@ -93,8 +93,8 @@ function drag(obj, callbacks , limit) {
 
     bindEvent(obj, 'mousedown', function(ev) {
 
-        downX = ev.clientX;
-        downY = ev.clientY;
+        downX = ev.screenX;
+        downY = ev.screenY;
         initX = obj.offsetLeft;
         initY = obj.offsetTop;
 
@@ -108,8 +108,8 @@ function drag(obj, callbacks , limit) {
         }
 
         function move(ev) {
-            moveX = ev.clientX - downX;
-            moveY = ev.clientY - downY;
+            moveX = ev.screenX - downX;
+            moveY = ev.screenY - downY;
 
             limit.x || (obj.style.left = initX + moveX + 'px');
             limit.y || (obj.style.top = initY + moveY + 'px');
@@ -232,12 +232,11 @@ function extend() {
                     continue;
                 }
 
-
+                copyIsArray = Array.isArray( copy );
                 // 引用类型，执行递归
-                if ( deep && copy && ( isPlainObject( copy ) || ( copyIsArray = Array.isArray( copy ) ) ) ) {
+                if ( deep && copy && ( isPlainObject( copy ) || copyIsArray) ) {
 
                     if ( copyIsArray ) {
-                        copyIsArray = false;
                         clone = src && Array.isArray( src ) ? src : [];
                     } else {
                         clone = src && isPlainObject( src ) ? src : {};
