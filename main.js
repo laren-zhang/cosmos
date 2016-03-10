@@ -269,6 +269,44 @@ function extend() {
     return target;
 }
 
+/*
+* 窗口中上部显示提示框
+* @Param {String} type 警告类型，可取值error、fail、warn、success
+* @Param {String} msg 消息内容
+* @Param {Number} [delay] 设置显示时长，默认3s
+* */
+function showMessage(type, msg, delay) {
+
+    delay = parseInt(delay) || 3000;
+
+    var
+        bgColor = {
+            'error': '#FD0F0F',
+            'fail':'#FD0F0F',
+            'warn': '#FFD42A',
+            'success': '#43B143'
+        }
+        , cssText
+        , $msgBox = $('#messageBox');
+
+
+    if( !$msgBox[0] ){
+
+        cssText = "position: fixed; left: 50%;transform: translate(-50%,10px); padding:15px 20px;font:16px/1.2em '微软雅黑';" +
+            "box-shadow: 0px 3px 6px #aaa;border-radius: 5px;max-width:300px;opacity: 1; color: #eee;background:" + bgColor[type];
+        $msgBox = $('<div id= "messageBox" style="' + cssText +'"><div>');
+        $msgBox.appendTo($('body'));
+
+    }
+
+    $msgBox.html(msg).fadeIn(10);
+
+    clearTimeout(window.msgBoxTimer);
+    window.msgBoxTimer  = setTimeout(function() {
+        $msgBox.fadeOut(800)
+    },delay)
+
+}
 
 /*
 * 简单的PubSub模式 发布者/订阅者模式
