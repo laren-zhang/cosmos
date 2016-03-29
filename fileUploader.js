@@ -2,215 +2,198 @@
  * Created by hk61 on 2016/3/21.
  */
 /**
- * Created by hk61 on 2016/3/21.
- */
-/**
  * 文件上传
+ * @Dependencies [jQuery]
  *
- * @param {Array} files file控件内容
+ * @示例：
+ *         fileUploader(ev.target.files,{
+ *           success:function(file) {
+ *               changeUserProfile(file.name);
+ *           },
+ *           allow:['image/*'],
+ *           single: true,
+ *           field:'avatar'
+ *       });
  */
 
+$(function() {
 
-var rImageType = /image\/.*/i;
-var rVideoType = /video\/.*/i;
-var rAudioType = /audio\/.*/i;
-var rApplicationType = /application\/.*/i;
+    var rImageType = /image\/\S+/i
+        , rVideoType = /video\/\S+/i
+        , rAudioType = /audio\/\S+/i
+        , rApplicationType = /application\/\S+/i;
 
 
-var flr = fileUploader = function(url, files, option) {
+    var flr = fileUploader = function(url, files, option) {
+        return new flr.fn.init(url, files, option);
+    };
 
-    return new flr.fn.init(url, files, option);
+    flr.fn = flr.prototype;
 
-};
+    // 默认配置选项
+    flr.option = {
 
-flr.fn = flr.prototype;
+        url:configInfo.server_url + '/api/file/upload',
+        allow: ['*'],
+        field: 'file',
+        single: false,
+        data:{},
+        success: function(res, xhr) {
+            console.log('成功！');
+        },
+        fail: function(ev, xhr) {
+            console.log('失败！');
+        },
+        progress: function(ev, xhr) {
+            console.log('上传中……');
+        },
+        abort: function(ev, xhr){
+            console.log('用户终止。');
+        },
+        start: function(ev, xhr){
+            console.log('上传开始……');
+        },
+        notAllowed: function(file) {    // 格式错误触发
+            console.log(file, '文件格式不被允许');
+        }
 
-flr.fn.option = {
-    allow: ['*'],
-    single: false
-};
+    };
 
-flr.extend = flr.fn.extend = function extend() {
-    var options, name, src, copy, copyIsArray, clone,
-        target = arguments[ 0 ] || {},
-        i = 1,
-        length = arguments.length,
-        deep = false;
+    flr.option.error = flr.option.fail;
 
-    // 如果是深拷贝
-    if ( typeof target === "boolean" ) {
-        deep = target;
 
-        // 跳过boolean
-        target = arguments[ i ] || {};
-        i++;
-    }
+    var init = flr.fn.init = function(url, files, option) {
 
-    // 处理target非对象情况
-    if ( typeof target !== "object" && {}.toString.call( target ) !== 'Function' ) {
-        target = {};
-    }
+        if(typeof url != 'string'){
+            option = files;
+            files = url;
+            url = void 0;
+        }
 
-    for ( ; i < length; i++ ) {
+        // 文件列表兼容处理
+        files = Array.isArray(files) ? files : ( files.length != void 0
+            ? Array.prototype.slice.call(files) : [files] );
 
-        // 只扩展 non-null 值
-        if ( ( options = arguments[ i ] ) != null ) {
+        // 选项参数扩充
+        this.option = $.extend(true, flr.option, option ,{
+            url: url,
+            files: files,
+            fileLength: files.length
+        });
 
-            for ( name in options ) {
-                src = target[ name ];
-                copy = options[ name ];
+        this.uploader( this.option.single ? files.slice(0,1) : files, this.option);
 
-                // 防止死循环
-                if ( target === copy ) {
-                    continue;
+    };
+
+    init.prototype = flr.prototype;
+
+
+    /*
+     * 检测是否与为允许的图片格式
+     * @Param {String} type 文件格式，例如'image/png'
+     * @return {Boolean}
+     * */
+    flr.fn.isAllow = function(type) {
+        var allow = this.option.allow;
+
+        if(allow.indexOf('*') != -1){
+            return true;  // 是否允许所有格式
+        }
+
+        if(allow.indexOf('image/*') != -1){   // 是否允许所有图片格式
+            return rImageType.test(type);
+        }
+
+        if(allow.indexOf('video/*') != -1){   // 是否允许所有视频格式
+            return rVideoType.test(type);
+        }
+
+        if(allow.indexOf('audio/*') != -1){   // 是否允许所有音频格式
+            return rAudioType.test(type);
+        }
+
+        if(allow.indexOf('application/*') != -1){   // 是否允许所有应用格式
+            return rApplicationType.test(type);
+        }
+
+        return allow.indexOf(type) != -1;
+
+    };
+
+    // 文件上传
+    flr.fn.uploader = function(files, config) {
+        var that = this;
+
+        if( !config.url ){
+            throw new Error('Param url is must!');
+        }
+
+        var xhr = new XMLHttpRequest();    console.log(xhr);
+
+        xhr.onreadystatechange = function(ev) {
+            if (this.readyState == 4) {
+
+                if (this.status == 200) {    // 成功上传
+
+                    var res = JSON.parse(xhr.responseText);
+                    config.success.call(that, res, xhr);
+
+                    // 上传终止
+                }else if (this.status == 0) {
+                    config.abort.call(that, ev, xhr);
+                } else {
+                    config.error.call(that, ev, xhr);
                 }
 
-                copyIsArray = Array.isArray( copy );
-                // 引用类型，执行递归
-                if ( deep && copy && ( isPlainObject( copy ) || copyIsArray) ) {
+            }
+        };
 
-                    if ( copyIsArray ) {
-                        clone = src && Array.isArray( src ) ? src : [];
-                    } else {
-                        clone = src && isPlainObject( src ) ? src : {};
-                    }
+        // 上传开始
+        xhr.upload.onloadstart = function(ev) {
+            config.start.call(this, ev, xhr);
+        };
 
-                    target[ name ] = extend( deep, clone, copy );
+        // 上传中
+        xhr.upload.onprogress = function(ev) {
+            config.progress.call(this, ev, xhr);
+        };
 
-                    // 不扩展 undefined 值
-                } else if ( copy !== undefined ) {
-                    target[ name ] = copy;
-                }
+        // 出错
+        xhr.upload.onerror = function(ev) {
+            config.error.call(this, ev, xhr);
+        };
+
+
+        var formData = new FormData();
+
+        // 附加数据通过data扩充
+        var data = config.data, val;
+        for(var k in data){
+            val = data[k];
+            if(val){
+                formData.append(k, file);
             }
         }
-    }
 
-    function isPlainObject( obj ) {
+        files.forEach(function(file) {
 
-        // - 任何对象内部 [[Class]]属性不为"[object Object]"
-        // - DOM nodes
-        // - window
-        if ( typeof obj !== "object" || obj.nodeType || obj === obj.window ) {
-            return false;
-        }else if( obj.constructor && ! {}.hasOwnProperty.call( obj.constructor.prototype, "isPrototypeOf" ) ){
-            return false;
-        }
+            var fileExt = file.type!= '' ?
+                          file.type : file.path.substring(file.path.lastIndexOf('.') + 1);
 
-        return true;
-    }
-
-    return target;
-};
-
-var init = flr.fn.init = function(url, files, option) {
-
-    files = Array.isArray(files) ? files : [files];
-    this.option = option || {};
-    console.log(this);
-    this.extend(true, this.option, {
-        url: url,
-        file: files,
-        fileLength: files.length,
-        donePointer: 0
-    });
-
-    this.singleUploader(files[0], this.option);
-
-};
-
-init.prototype = flr.prototype;
-
-/*
- * 检测是否与为允许的图片格式
- * @Param {String} type 文件格式，例如'image/png'
- * @return {Boolean}
- * */
-flr.fn.isAllow = function(type) {
-
-    var allow = this.option.allow;
-
-    if(allow.indexOf('*')) return true; // 是否允许所有格式
-
-
-    if(allow.indexOf('image/*')){   // 是否允许所有图片格式
-        return rImageType.test(type);
-    }
-
-    if(allow.indexOf('video/*')){   // 是否允许所有视频格式
-        return rVideoType.test(type);
-    }
-
-    if(allow.indexOf('audio/*')){   // 是否允许所有音频格式
-        return rAudioType.test(type);
-    }
-
-    if(allow.indexOf('application/*')){   // 是否允许所有应用格式
-        return rApplicationType.test(type);
-    }
-
-    return allow.indexOf(type) != -1;
-
-};
-
-
-flr.fn.multiUploader = function(config) {
-
-    var files = config.files;
-    this.len = files.length;
-
-    for(var i = 0; i< len; i++){
-        this.singleUploader(files[i], config)
-    }
-
-};
-
-
-// 单个文件上传
-flr.fn.singleUploader = function(file, config) {
-
-    if( !config.url ){
-        throw new Error('Param url is must!');
-    }
-
-    file = config.file;
-
-    if(!this.isAllow(file.type) ){
-        throw new Error('This file\'type be not allowed!');
-    }
-
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (this.readyState == 4) {
-
-            if (this.status == 200) {    // 成功上传
-                var res = JSON.parse(xhr.responseText);
-                if( this.donePointer == this.fileLength ){
-                    config.success && config.success(res);
-                }
-                // 上传终止
-            }else if (this.status == 0) {
-                config.abort && config.abort(xhr);
-            } else {
-                fail && fail(xhr);
-                config.error && config.error(xhr);
+            if(!that.isAllow(fileExt) ){
+                config.notAllowed && config.notAllowed(file);
+                throw new Error('This file\'type be not allowed!');
             }
 
-        }
+            formData.append(config.field, file);
+
+        });
+
+        xhr.open('post', config.url, true);
+        xhr.setRequestHeader('sid', localStorage.getItem('sid') || 0);
+        xhr.send(formData);
+
     };
+    window.fileUploader = fileUploader;
 
-    // 上传开始
-    xhr.upload.onloadstart = function() {
-        config.start && config.start(xhr);
-    };
-
-    // 上传中
-    xhr.upload.onprogress = function(ev) {
-        config.progress && config.progress(ev);
-    };
-
-    var formData = new FormData();
-    formData.append("file", file);
-    xhr.open('post', config.url, true);
-    xhr.send(formData);
-
-};
+});
